@@ -1,32 +1,30 @@
 import streamlit as st
-from download import stock_data
 import pandas as pd
 import matplotlib.pyplot as plt
+from fetch_stock_data import all_data
 
-def show_page():
-    st.title("Data Viewer")
+@st.cache_data
+def load_data():
+    df = pd.read_csv('./all_data.csv')
+    return df
+print(all_data.shape)
 
-    # Fetch and clean data
-    df = stock_data.head(5)
-
-    # Display data
-    st.write("Raw Data:")
-    st.dataframe(df)
-
-data = stock_data
-def show_page(data):
+def show_page(all_data):
     st.title("Stock Line Chart")
 
     # User input for stock symbol and date range
     ticker = st.text_input("Enter Stock Ticker Symbol (e.g., AAPL):", "AAPL")
     start_date = st.date_input("Start Date", value=pd.to_datetime("2023-01-01"))
     end_date = st.date_input("End Date", value=pd.to_datetime("2023-12-31"))
-    data = data[data['Ticker']=='AAPL']
+    data = all_data[all_data['Ticker']==ticker]
+    data['Date']=pd.to_datetime(data['Date'])
+    data.set_index('Date', inplace=True)
 
     # Fetch and display stock data
     if not data.empty:
         st.write(f"Showing data for:")
         st.dataframe(data.head(2))
+        st.dataframe(data.tail(2))
         print(data.columns)
         print(data.index)
 
@@ -42,4 +40,4 @@ def show_page(data):
         st.pyplot(plt)  # Display the chart in Streamlit
     else:
         st.error("No data available for the selected ticker and date range.")
-show_page(data)
+show_page(all_data)
