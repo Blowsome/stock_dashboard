@@ -6,6 +6,8 @@ from fetch_stock_tickers import full_tickers
 from dateutil.relativedelta import relativedelta
 import time
 from itertools import islice
+from pathlib import Path
+
 
 class StockData:
     """
@@ -80,7 +82,24 @@ class StockData:
             print(invalid_tickers.shape)
         except Exception as e:
             print(f"Error continuing fetching data: {e}")
-
+    
+    def get_sector_info(self, tickers):
+        data = []
+        for i, ticker in enumerate(tickers):
+            try:
+                info = yf.Ticker(ticker).info
+                sector = info.get("sector", "N/A")
+                industry = info.get("industry", "N/A")
+                data.append({"Ticker":ticker, "Sector": sector, "Industry":industry})
+            except Exception as e:
+                print("Eorr fetching sector/industry info for {ticker}:", {e})
+                data.append({"Ticker":ticker, "Sector": "Error", "Industry":"Error"})
+            if i%self.batch_size ==0:
+                print("step:", i)
+                time.sleep(self.delay)
+        df = pd.DataFrame(data)
+        return df
+    
 def convert_date_to_str_YYYYMM(df):
     df["Date"] = pd.to_datetime(df["Date"], format='mixed')
     df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
@@ -89,5 +108,29 @@ def convert_date_to_str_YYYYMM(df):
 #downloader = StockData(100,10)
 #downloader.recovery_download(start='2022-01-01', interval="1d")
 
-all_data = pd.read_csv('./all_data.csv')
+script_dir = Path(__file__).parent
+price_dir = script_dir/"assets/all_data.csv"
+sector_dir = script_dir/"assets/all_sectors.csv"
+
+all_price_data = pd.read_csv(price_dir)
+sector_data = pd.read_csv(sector_dir)
+
+# downloader = StockData(100,60)
+#tickers = all_data['Ticker'].unique().tolist()
+#sector = downloader.get_sector_info(tickers)
+#save_dir = script_dir/"assets/all_sectors.csv"
+#sector.to_csv(save_dir, index=False)
+
+# recover tickers with industry and sector error during first download
+#all_sectors = pd.read_csv(save_dir)
+#error_tickers = all_sectors[all_sectors['Sector']=='Error']['Ticker'].tolist()
+
+#downloader = StockData(100,60)
+#tickers_error_sectors = downloader.get_sector_info(error_tickers)
+
+#all_sector = all_sectors[all_sectors['Sector']!='Error'].copy()
+#all_sector = pd.concat([all_sector, tickers_error_sectors])
+#all_sector.to_csv(save_dir, index=False)
+
+
     

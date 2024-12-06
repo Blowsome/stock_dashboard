@@ -1,13 +1,10 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from fetch_stock_data import all_data
+from fetch_stock_data import all_price_data, sector_data
 
-@st.cache_data
-def load_data():
-    df = pd.read_csv('./all_data.csv')
-    return df
-print(all_data.shape)
+print('Data shape', all_price_data.shape)
+print(sector_data.shape)
 
 def show_page(all_data):
     st.title("Stock Line Chart")
@@ -19,14 +16,14 @@ def show_page(all_data):
     data = all_data[all_data['Ticker']==ticker]
     data['Date']=pd.to_datetime(data['Date'])
     data.set_index('Date', inplace=True)
+    print(data.shape)
 
     # Fetch and display stock data
     if not data.empty:
+        print('True')
         st.write(f"Showing data for:")
         st.dataframe(data.head(2))
         st.dataframe(data.tail(2))
-        print(data.columns)
-        print(data.index)
 
         # Plotting the stock's closing price
         st.write("Closing Price Line Chart:")
@@ -40,4 +37,4 @@ def show_page(all_data):
         st.pyplot(plt)  # Display the chart in Streamlit
     else:
         st.error("No data available for the selected ticker and date range.")
-show_page(all_data)
+show_page(all_price_data)
